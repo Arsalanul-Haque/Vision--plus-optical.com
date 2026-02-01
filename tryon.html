@@ -2,95 +2,76 @@
 <html>
 <head>
 <title>Vision Plus Optical – AI Try On</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body{margin:0;background:#111;color:white;text-align:center;font-family:Arial}
+body{margin:0;background:#111;color:white;font-family:Arial;text-align:center}
 header{background:black;padding:15px;font-size:22px}
-.camera{position:relative;display:inline-block}
-video,canvas{width:100%;max-width:380px;border-radius:15px}
-canvas{position:absolute;left:0;top:0}
+#canvas{width:100%;max-width:380px;border-radius:15px}
 button{padding:10px 15px;margin:8px;background:#ff9800;border:none;border-radius:8px}
 </style>
 </head>
+
 <body>
 
 <header>Vision Plus Optical – AI Try On</header>
 
-<div class="camera">
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
-</div>
+<canvas id="canvas"></canvas><br>
 
-<br>
-<input type="file" id="upload" accept="image/*">
-<br>
-<button onclick="switchCamera()">Switch Camera</button>
+<input type="file" id="upload" accept="image/*"><br>
+<button onclick="changeFrame()">Change Frame</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
 
 <script>
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const upload=document.getElementById("upload");
 
-let frame = new Image();
-frame.src = "Frame/Frame.png";
+let frames=["Frame/Frame1.png"];
+let frameIndex=0;
+let frame=new Image();
+frame.src=frames[0];
 
-const faceMesh = new FaceMesh({
-  locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+const faceMesh=new FaceMesh({
+ locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
 });
+faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true});
 
-faceMesh.setOptions({
-  maxNumFaces: 1,
-  refineLandmarks: true
-});
+let img=new Image();
 
-faceMesh.onResults(results => {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(results.multiFaceLandmarks){
-    let p = results.multiFaceLandmarks[0];
-    let left = p[33];
-    let right = p[263];
+upload.onchange=e=>{
+ img.src=URL.createObjectURL(e.target.files[0]);
+ img.onload=()=>processImage();
+};
 
-    let x = left.x * canvas.width;
-    let y = left.y * canvas.height;
-    let w = (right.x - left.x) * canvas.width;
-
-    ctx.drawImage(frame, x-40, y-40, w+80,
-  }
-});
-
-const camera = new Camera(video,{
-  onFrame: async()=>{
-    await faceMesh.send({image:video});
-  },
-  width:360,
-  height:480
-let eyeCenterY = (p[159].y + p[145].y) / 2 * canvas.height;
-
-let glassesWidth = w * 1.6;
-let glassesHeight = glassesWidth / 2.5;
-
-let gx = x - glassesWidth * 0.25;
-let gy = eyeCenterY - glassesHeight / 2;
-
-ctx.drawImage(frame, gx, gy, glassesWidth, glassesHeight);});
-camera.start();
-
-function switchCamera(){
-  location.reload();
+function changeFrame(){
+ frameIndex=(frameIndex+1)%frames.length;
+ frame.src=frames[frameIndex];
+ processImage();
 }
 
-document.getElementById("upload").onchange = e=>{
-  let img = new Image();
-  img.src = URL.createObjectURL(e.target.files[0]);
-  img.onload=()=>{
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img,0,0);
-  }
+function processImage(){
+ canvas.width=img.width;
+ canvas.height=img.height;
+ ctx.drawImage(img,0,0);
+ faceMesh.send({image:img});
 }
+
+faceMesh.onResults(r=>{
+ if(!r.multiFaceLandmarks) return;
+ let p=r.multiFaceLandmarks[0];
+
+ let left=p[33], right=p[263];
+ let eyeY=(p[159].y+p[145].y)/2;
+
+ let w=(right.x-left.x)*canvas.width*1.6;
+ let h=w/2.5;
+
+ let x=left.x*canvas.width-w*0.25;
+ let y=eyeY*canvas.height-h/2;
+
+ ctx.drawImage(frame,x,y,w,h);
+});
 </script>
 
 </body>
