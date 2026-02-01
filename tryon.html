@@ -1,61 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Vision Plus AI Try-On</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
-
-<style>
-body{margin:0;background:black;color:white;text-align:center}
-video,canvas{position:absolute;left:50%;transform:translateX(-50%)}
-#bar{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#ff5722;padding:10px 20px;border-radius:30px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vision Plus – AI Try-On</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+    }
+    #video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+    #canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    .frame-selector img {
+      width: 80px;
+      margin: 5px;
+      cursor: pointer;
+      border: 2px solid white;
+      border-radius: 5px;
+    }
+    .frame-selector img.selected {
+      border-color: gold;
+    }
+  </style>
 </head>
-
 <body>
-<h3>Vision Plus – AI Try-On</h3>
-<video id="video" autoplay></video>
-<canvas id="canvas"></canvas>
+  <h2>Vision Plus – AI Try-On</h2>
 
-<div id="bar">
-<select id="frame">
-  <option value="https://i.imgur.com/Qr6wFZP.png">Classic</option>
-  <option value="https://i.imgur.com/Y5xJ4wJ.png">Aviator</option>
-</select>
-<button onclick="location.href='index.html'">Home</button>
-</div>
+  <!-- Camera Video -->
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
 
-<script>
-const video=document.getElementById("video");
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-const img=new Image();
-img.src=document.getElementById("frame").value;
-document.getElementById("frame").onchange=e=>img.src=e.target.value;
+  <!-- Frame Selector -->
+  <div class="frame-selector">
+    <img src="frames/frame1.png" class="selected" alt="Frame 1">
+    <img src="frames/frame2.png" alt="Frame 2">
+    <img src="frames/frame3.png" alt="Frame 3">
+  </div>
 
-const faceMesh=new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true});
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
 
-faceMesh.onResults(r=>{
-canvas.width=video.videoWidth;
-canvas.height=video.videoHeight;
-ctx.clearRect(0,0,canvas.width,canvas.height);
-if(r.multiFaceLandmarks){
-let lm=r.multiFaceLandmarks[0];
-let l=lm[33], rgt=lm[263];
-let cx=(l.x+rgt.x)/2*canvas.width;
-let cy=(l.y+rgt.y)/2*canvas.height;
-let w=Math.abs(rgt.x-l.x)*canvas.width*1.6;
-let h=w/3;
-ctx.drawImage(img,cx-w/2,cy-h/2,w,h);
-}
-});
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-const cam=new Camera(video,{onFrame:async()=>{await faceMesh.send({image:video})}});
-cam.start();
-</script>
+    let selectedFrame = document.querySelector(".frame-selector img.selected");
+    const frames = document.querySelectorAll(".frame-selector img");
 
+    frames.forEach(img => {
+      img.addEventListener("click", () => {
+        frames.forEach(f => f.classList.remove("selected"));
+        img.classList.add("selected");
+        selectedFrame = img;
+      });
+    });
+
+    async function setupCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      return new Promise(resolve => {
+        video.onloadedmetadata = () => {
+          video.play();
+          resolve();
+        };
+      });
+    }
+
+    async function main() {
+      await setupCamera();
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const model = await faceLandmarksDetection.load(
+        faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
+      );
+
+      async function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const predictions = await model.estimateFaces({input: video});
+
+        if (predictions.length > 0) {
+          predictions.forEach(pred => {
+            const leftEye = pred.scaledMesh[33]; // left eye
+            const rightEye = pred.scaledMesh[263]; // right eye
+
+            const frameWidth = (rightEye[0] - leftEye[0]) * 2.5;
+            const frameHeight = frameWidth / selectedFrame.naturalWidth * selectedFrame.naturalHeight;
+
+            const x = leftEye[0] - frameWidth * 0.25;
+            const y = leftEye[1] - frameHeight * 0.5;
+
+            ctx.drawImage(selectedFrame, x, y, frameWidth, frameHeight);
+          });
+        }
+
+        requestAnimationFrame(render);
+      }
+
+      render();
+    }
+
+    main();
+  </script>
 </body>
 </html>
