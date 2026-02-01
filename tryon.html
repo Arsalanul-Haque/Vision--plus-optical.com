@@ -5,83 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vision Plus – AI Try-On</title>
 <style>
-  body { margin:0; font-family: Arial, sans-serif; background:#111; color:#fff; display:flex; flex-direction:column; align-items:center; }
-  h1 { text-align:center; margin:20px 0; }
-  video, canvas { border-radius: 15px; }
-  .camera-container { position: relative; width: 90%; max-width: 400px; }
-  video { width:100%; height:auto; border-radius:15px; }
-  canvas { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-  .frames { display:flex; justify-content:center; margin:15px 0; gap:10px; }
-  .frames img { width:60px; height:40px; border:2px solid #fff; border-radius:5px; cursor:pointer; object-fit:cover; }
-  .frames img.selected { border:2px solid yellow; }
-  footer { position:fixed; bottom:0; width:100%; background:#222; display:flex; justify-content:space-around; padding:10px 0; }
-  footer button { color:#fff; background:none; border:none; font-size:16px; cursor:pointer; }
+  body {margin:0;font-family:Arial,sans-serif;text-align:center;background:#111;color:white;}
+  video {width:100%;max-width:400px;border-radius:12px;margin-top:15px;}
+  .frames {margin-top:15px;display:flex;justify-content:center;gap:10px;}
+  .frames img {width:80px;height:50px;object-fit:cover;border:2px solid #fff;border-radius:8px;cursor:pointer;}
+  .frames img.selected {border:2px solid yellow;}
+  canvas {position:absolute;top:0;left:0;}
 </style>
 </head>
 <body>
 
 <h1>Vision Plus – AI Try-On</h1>
-
-<div class="camera-container">
+<div style="position:relative;display:inline-block;">
   <video id="video" autoplay playsinline></video>
-  <canvas id="overlay"></canvas>
+  <canvas id="canvas"></canvas>
 </div>
 
 <div class="frames">
-  <img src="https://uploads.onecompiler.io/44c5humbr/44c5hxnd3/2795.png" alt="Frame 1" onclick="selectFrame(this)">
-  <img src="frames/frame2.png" alt="Frame 2" onclick="selectFrame(this)">
-  <img src="frames/frame3.png" alt="Frame 3" onclick="selectFrame(this)">
+  <img src="frames/frame1.png" id="f1" onclick="selectFrame('f1')">
+  <img src="frames/frame2.png" id="f2" onclick="selectFrame('f2')">
+  <img src="frames/frame3.png" id="f3" onclick="selectFrame('f3')">
 </div>
 
-<footer>
-  <button onclick="goHome()">Home</button>
-  <button onclick="aiTryOn()">AI</button>
-  <button onclick="goCart()">Cart</button>
-</footer>
-
 <script>
-const video = document.getElementById('video');
-const canvas = document.getElementById('overlay');
-const ctx = canvas.getContext('2d');
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
 let selectedFrame = null;
-let frameImg = new Image();
 
-// Load camera
-navigator.mediaDevices.getUserMedia({ video: true })
+navigator.mediaDevices.getUserMedia({video:true})
 .then(stream => { video.srcObject = stream; })
-.catch(err => { alert('Camera permission denied!'); });
+.catch(err => { alert("Camera access denied: "+err); });
 
-// Adjust canvas size when video metadata loads
-video.addEventListener('loadedmetadata', () => {
+function selectFrame(id){
+  document.querySelectorAll('.frames img').forEach(img => img.classList.remove('selected'));
+  document.getElementById(id).classList.add('selected');
+  selectedFrame = document.getElementById(id);
+}
+
+video.addEventListener('play', () => {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-  drawLoop();
-});
-
-// Frame selection
-function selectFrame(imgElem) {
-  selectedFrame = imgElem.src;
-  frameImg.src = selectedFrame;
-
-  // Highlight selected frame
-  document.querySelectorAll('.frames img').forEach(i => i.classList.remove('selected'));
-  imgElem.classList.add('selected');
-}
-
-// Draw video + overlay
-function drawLoop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (selectedFrame) {
-    ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    if(selectedFrame){
+      ctx.drawImage(selectedFrame,canvas.width/4,canvas.height/4,canvas.width/2,canvas.height/4);
+    }
+    requestAnimationFrame(draw);
   }
-  requestAnimationFrame(drawLoop);
-}
-
-// Footer buttons
-function goHome() { window.location.href='index.html'; }
-function goCart() { window.location.href='cart.html'; }
-function aiTryOn() { alert('Already in AI Try-On!'); }
-
+  draw();
+});
 </script>
 
 </body>
