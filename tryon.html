@@ -61,14 +61,16 @@ faceMesh.onResults(r=>{
  if(!r.multiFaceLandmarks) return;
  let p=r.multiFaceLandmarks[0];
 
- let left=p[33], right=p[263];
- let eyeY=(p[159].y+p[145].y)/2;
+ let left = p[130];   // left eye outer
+let right = p[359]; // right eye outer
 
- let w=(right.x-left.x)*canvas.width*1.6;
- let h=w/2.5;
+let eyeTop = (p[159].y + p[386].y) / 2;
 
- let x=left.x*canvas.width-w*0.25;
- let y=eyeY*canvas.height-h/2;
+ let w = (right.x - left.x) * canvas.width * 1.8;
+let h = w / 3;
+
+let x = left.x * canvas.width - w * 0.15;
+let y = eyeTop * canvas.height - h * 0.5;
 
  ctx.drawImage(frame,x,y,w,h);
 });
