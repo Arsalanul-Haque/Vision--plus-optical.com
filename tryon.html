@@ -66,14 +66,17 @@ let right = p[359]; // right eye outer
 
 let eyeTop = (p[159].y + p[386].y) / 2;
 
- let w = (right.x - left.x) * canvas.width * 1.8;
-let h = w / 3;
+ let eyeLeft = p[33];
+let eyeRight = p[263];
+let eyeMidY = (p[159].y + p[145].y) / 2;
 
-let x = left.x * canvas.width - w * 0.15;
-let y = eyeTop * canvas.height - h * 0.5;
+let w = (eyeRight.x - eyeLeft.x) * canvas.width * 1.6;
+let h = w / 2.8;
 
- ctx.drawImage(frame,x,y,w,h);
-});
+let x = eyeLeft.x * canvas.width - w * 0.2;
+let y = eyeMidY * canvas.height - h * 0.45;
+
+ctx.drawImage(frame, x, y, w, h);
 </script>
 
 </body>
