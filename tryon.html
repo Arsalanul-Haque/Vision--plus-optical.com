@@ -4,95 +4,85 @@
 <title>Vision Plus Optical – AI Try On</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{margin:0;background:#111;color:white;font-family:Arial;text-align:center;}
-header{background:black;padding:15px;font-size:22px;font-weight:bold;}
-.camera-box{position:relative;display:inline-block;}
-video,canvas,img{width:100%;max-width:380px;border-radius:15px;}
-canvas{position:absolute;left:0;top:0;}
-.controls{margin:10px;}
-button{padding:10px 15px;border:none;background:#ff9800;font-size:16px;border-radius:8px;}
-input{margin-top:10px;}
+body{margin:0;background:#111;color:white;text-align:center;font-family:Arial}
+header{background:black;padding:15px;font-size:22px}
+.camera{position:relative;display:inline-block}
+video,canvas{width:100%;max-width:380px;border-radius:15px}
+canvas{position:absolute;left:0;top:0}
+button{padding:10px 15px;margin:8px;background:#ff9800;border:none;border-radius:8px}
 </style>
 </head>
-
 <body>
+
 <header>Vision Plus Optical – AI Try On</header>
 
-<div class="camera-box">
-    <video id="video" autoplay muted playsinline></video>
-    <canvas id="canvas"></canvas>
+<div class="camera">
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
 </div>
 
-<div class="controls">
-    <button onclick="switchCamera()">Switch Camera</button><br>
-    <input type="file" id="upload" accept="image/*">
-</div>
+<br>
+<input type="file" id="upload" accept="image/*">
+<br>
+<button onclick="switchCamera()">Switch Camera</button>
 
-<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
 
 <script>
-let video = document.getElementById("video");
-let canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
-let upload = document.getElementById("upload");
-let facing = "user";
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
 let frame = new Image();
 frame.src = "Frame/Frame.png";
 
-async function loadModels(){
-  await faceapi.nets.tinyFaceDetector.loadFromUri("models");
-}
+const faceMesh = new FaceMesh({
+  locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+});
 
-async function startCamera(){
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video:{facingMode:facing}
-  });
-  video.srcObject = stream;
-}
+faceMesh.setOptions({
+  maxNumFaces: 1,
+  refineLandmarks: true
+});
+
+faceMesh.onResults(results => {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(results.multiFaceLandmarks){
+    let p = results.multiFaceLandmarks[0];
+    let left = p[33];
+    let right = p[263];
+
+    let x = left.x * canvas.width;
+    let y = left.y * canvas.height;
+    let w = (right.x - left.x) * canvas.width;
+
+    ctx.drawImage(frame, x-40, y-40, w+80, w/2);
+  }
+});
+
+const camera = new Camera(video,{
+  onFrame: async()=>{
+    await faceMesh.send({image:video});
+  },
+  width:360,
+  height:480
+});
+camera.start();
 
 function switchCamera(){
-  facing = facing=="user"?"environment":"user";
-  startCamera();
+  location.reload();
 }
 
-video.onloadeddata = ()=>{
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  detectVideo();
-}
-
-async function detectVideo(){
-  setInterval(async ()=>{
-    const det = await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions());
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    if(det){
-      let {x,y,width,height}=det.box;
-      ctx.drawImage(frame,x-25,y+height/3,width+50,height/2);
-    }
-  },100);
-}
-
-/* PHOTO UPLOAD */
-upload.onchange = async ()=>{
-  const img = new Image();
-  img.src = URL.createObjectURL(upload.files[0]);
-  img.onload = async ()=>{
+document.getElementById("upload").onchange = e=>{
+  let img = new Image();
+  img.src = URL.createObjectURL(e.target.files[0]);
+  img.onload=()=>{
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img,0,0);
-
-    const det = await faceapi.detectSingleFace(img,new faceapi.TinyFaceDetectorOptions());
-    if(det){
-      let {x,y,width,height}=det.box;
-      ctx.drawImage(frame,x-25,y+height/3,width+50,height/2);
-    }
   }
-};
-
-loadModels();
-startCamera();
+}
 </script>
 
 </body>
