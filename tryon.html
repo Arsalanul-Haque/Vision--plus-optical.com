@@ -2,15 +2,16 @@
 <html>
 <head>
 <title>Vision Plus Optical – AI Try On</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{margin:0;background:#111;color:white;font-family:Arial;text-align:center;}
-header{background:black;padding:15px;font-size:22px;}
+header{background:black;padding:15px;font-size:22px;font-weight:bold;}
 .camera-box{position:relative;display:inline-block;}
-video,canvas{width:100%;max-width:380px;border-radius:15px;}
+video,canvas,img{width:100%;max-width:380px;border-radius:15px;}
 canvas{position:absolute;left:0;top:0;}
 .controls{margin:10px;}
-button{padding:10px 14px;margin:5px;border:none;background:#ff9800;border-radius:8px;}
+button{padding:10px 15px;border:none;background:#ff9800;font-size:16px;border-radius:8px;}
+input{margin-top:10px;}
 </style>
 </head>
 
@@ -18,93 +19,81 @@ button{padding:10px 14px;margin:5px;border:none;background:#ff9800;border-radius
 <header>Vision Plus Optical – AI Try On</header>
 
 <div class="camera-box">
-<video id="video" autoplay muted playsinline></video>
-<canvas id="canvas"></canvas>
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
 </div>
 
 <div class="controls">
-<button onclick="switchCamera()">Switch Camera</button>
-<button onclick="changeFrame()">Change Frame</button>
-<button onclick="capture()">Capture</button><br>
-<input type="file" id="upload" accept="image/*">
-<a id="download" style="display:none">Download</a>
+    <button onclick="switchCamera()">Switch Camera</button><br>
+    <input type="file" id="upload" accept="image/*">
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-<script>
-let video=document.getElementById("video");
-let canvas=document.getElementById("canvas");
-let ctx=canvas.getContext("2d");
-let upload=document.getElementById("upload");
-let download=document.getElementById("download");
 
-let facing="user";
-let frames=["https://uploads.onecompiler.io/44c5humbr/44c9u3jc8/3827.jpg","Frame/f2.png","Frame/f3.png"];
-let frameIndex=0;
-let frame=new Image();
-frame.src=frames[0];
+<script>
+let video = document.getElementById("video");
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let upload = document.getElementById("upload");
+let facing = "user";
+
+let frame = new Image();
+frame.src = "Frame/Frame.png";
 
 async function loadModels(){
- await faceapi.nets.tinyFaceDetector.loadFromUri("models");
+  await faceapi.nets.tinyFaceDetector.loadFromUri("models");
 }
 
 async function startCamera(){
- const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}});
- video.srcObject=stream;
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video:{facingMode:facing}
+  });
+  video.srcObject = stream;
 }
 
 function switchCamera(){
- facing=facing=="user"?"environment":"user";
- startCamera();
+  facing = facing=="user"?"environment":"user";
+  startCamera();
 }
 
-function changeFrame(){
- frameIndex=(frameIndex+1)%frames.length;
- frame.src=frames[frameIndex];
-}
-
-video.onloadeddata=()=>{
- canvas.width=video.videoWidth;
- canvas.height=video.videoHeight;
- detectVideo();
+video.onloadeddata = ()=>{
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  detectVideo();
 }
 
 async function detectVideo(){
- setInterval(async()=>{
-  const det=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions());
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(det){
-    let {x,y,width,height}=det.box;
-    ctx.drawImage(frame,x-25,y+height/3,width+50,height/2);
-  }
- },120);
+  setInterval(async ()=>{
+    const det = await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions());
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    if(det){
+      let {x,y,width,height}=det.box;
+      ctx.drawImage(frame,x-25,y+height/3,width+50,height/2);
+    }
+  },100);
 }
 
-upload.onchange=async()=>{
- let img=new Image();
- img.src=URL.createObjectURL(upload.files[0]);
- img.onload=async()=>{
-  canvas.width=img.width;
-  canvas.height=img.height;
-  ctx.drawImage(img,0,0);
-  let det=await faceapi.detectSingleFace(img,new faceapi.TinyFaceDetectorOptions());
-  if(det){
-    let {x,y,width,height}=det.box;
-    ctx.drawImage(frame,x-25,y+height/3,width+50,height/2);
-  }
- }
-}
+/* PHOTO UPLOAD */
+upload.onchange = async ()=>{
+  const img = new Image();
+  img.src = URL.createObjectURL(upload.files[0]);
+  img.onload = async ()=>{
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img,0,0);
 
-function capture(){
- let img=canvas.toDataURL("image/png");
- download.href=img;
- download.download="VisionPlus.png";
- download.style.display="block";
- download.innerText="Download Image";
-}
+    const det = await faceapi.detectSingleFace(img,new faceapi.TinyFaceDetectorOptions());
+    if(det){
+      let {x,y,width,height}=det.box;
+      ctx.drawImage(frame,x-25,y+height/3,width+50,height/2);
+    }
+  }
+};
 
 loadModels();
 startCamera();
 </script>
+
 </body>
 </html>
