@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Vision Plus AI Try-On</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+
+<style>
+body{margin:0;background:black;color:white;text-align:center}
+video,canvas{position:absolute;left:50%;transform:translateX(-50%)}
+#bar{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#ff5722;padding:10px 20px;border-radius:30px}
+</style>
+</head>
+
+<body>
+<h3>Vision Plus – AI Try-On</h3>
+<video id="video" autoplay></video>
+<canvas id="canvas"></canvas>
+
+<div id="bar">
+<select id="frame">
+  <option value="https://i.imgur.com/Qr6wFZP.png">Classic</option>
+  <option value="https://i.imgur.com/Y5xJ4wJ.png">Aviator</option>
+</select>
+<button onclick="location.href='index.html'">Home</button>
+</div>
+
+<script>
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const img=new Image();
+img.src=document.getElementById("frame").value;
+document.getElementById("frame").onchange=e=>img.src=e.target.value;
+
+const faceMesh=new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true});
+
+faceMesh.onResults(r=>{
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+ctx.clearRect(0,0,canvas.width,canvas.height);
+if(r.multiFaceLandmarks){
+let lm=r.multiFaceLandmarks[0];
+let l=lm[33], rgt=lm[263];
+let cx=(l.x+rgt.x)/2*canvas.width;
+let cy=(l.y+rgt.y)/2*canvas.height;
+let w=Math.abs(rgt.x-l.x)*canvas.width*1.6;
+let h=w/3;
+ctx.drawImage(img,cx-w/2,cy-h/2,w,h);
+}
+});
+
+const cam=new Camera(video,{onFrame:async()=>{await faceMesh.send({image:video})}});
+cam.start();
+</script>
+
+</body>
+</html>
