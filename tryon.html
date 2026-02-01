@@ -1,70 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vision Plus Optical</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vision Plus Optical – AI Try On</title>
 <style>
-body{margin:0;background:#000;color:#fff;font-family:Arial;text-align:center}
-h1{padding:15px}
-#stage{position:relative;width:90vw;max-width:380px;margin:auto}
-#photo{width:100%;border-radius:15px}
+body{
+    margin:0;
+    background:#000;
+    color:#fff;
+    font-family:Arial, sans-serif;
+    text-align:center;
+}
+h1{padding:15px;}
+#stage{
+    position:relative;
+    width:90vw;
+    max-width:400px;
+    margin:auto;
+}
+#photo{
+    width:100%;
+    border-radius:15px;
+}
 #frame{
- position:absolute;
- top:43%;
- left:50%;
- width:70%;
- transform:translate(-50%,-50%);
- pointer-events:none;
- display:none;
+    position:absolute;
+    top:43%;
+    left:50%;
+    width:70%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    display:none;
 }
 button{
- padding:14px 30px;
- margin:10px;
- border:none;
- border-radius:12px;
- background:#ff9800;
- font-size:16px;
+    padding:14px 30px;
+    margin:10px;
+    border:none;
+    border-radius:12px;
+    background:#ff9800;
+    font-size:16px;
+    cursor:pointer;
 }
-input{display:none}
+#tryNext{
+    display:none; /* initially hide */
+}
+input{
+    display:none;
+}
 </style>
 </head>
-
 <body>
 
 <h1>Vision Plus Optical – AI Try On</h1>
 
 <div id="stage">
-  <img id="photo">
-  <img id="frame" src="3812-removebg-preview.png">
+    <img id="photo">
+    <img id="frame" src="3812-removebg-preview.png">
 </div>
-
 <label for="file">
-  <button id="uploadBtn">Upload Your Photo</button>
+    <button id="uploadBtn">Upload Your Photo</button>
 </label>
 <input type="file" id="file" accept="image/*">
 
 <br>
-<button onclick="nextFrame()">Try Next Frame</button>
+<button id="tryNext" onclick="nextFrame()">Try Next Frame</button>
 
 <script>
-const frames=["remove-preview.png"];
-let i=0;
-const photo=document.getElementById("photo");
-const frame=document.getElementById("frame");
-const upload=document.getElementById("uploadBtn");
+const frames=["remove-preview.png"]; // aage aur frames add kar sakte ho
+let current=0;
 
-file.onchange=e=>{
-  const f=e.target.files[0];
-  if(!f) return;
-  photo.src=URL.createObjectURL(f);
-  frame.style.display="block";
-  upload.style.display="none";
+const photo = document.getElementById("photo");
+const frame = document.getElementById("frame");
+const fileInput = document.getElementById("file");
+const uploadBtn = document.getElementById("uploadBtn");
+const tryNextBtn = document.getElementById("tryNext");
+
+fileInput.onchange = e => {
+    const f = e.target.files[0];
+    if(!f) return;
+    photo.src = URL.createObjectURL(f);
+    frame.style.display = "block";      // show frame
+    tryNextBtn.style.display = "inline-block"; // show Try Next Frame button
+    uploadBtn.style.display = "none";    // hide upload button
 };
 
 function nextFrame(){
-  i=(i+1)%frames.length;
-  frame.src=frames[i];
+    current = (current + 1) % frames.length;
+    frame.src = frames[current];
 }
 </script>
 
