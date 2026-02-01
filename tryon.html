@@ -69,60 +69,69 @@ button{
 <br>
 <button id="tryNext">Try Next Frame</button>
 
-<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/face-api.js"></scri
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 <script>
-const photo = document.getElementById("photo");
+const imageUpload = document.getElementById("imageUpload");
+const userImg = document.getElementById("userImage");
 const frame = document.getElementById("frame");
-const fileInput = document.getElementById("fileInput");
-const uploadBtn = document.getElementById("uploadBtn");
-const tryNext = document.getElementById("tryNext");
+const tryNextBtn = document.getElementById("tryNext");
 
-uploadBtn.onclick = ()=> fileInput.click();
+const frames = [
+  "frame1.png",
+  "frame2.png",
+  "frame3.png",
+  "frame4.png"
+];
+let currentFrame = 0;
 
-fileInput.onchange = e=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    photo.src = URL.createObjectURL(file);
-    photo.style.display="block";
-    uploadBtn.style.display="none";
-    tryNext.style.display="inline-block";
-};
+// Load face api models
+Promise.all([
+  faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/models'),
+  faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/models')
+]);
 
-photo.onload = async ()=>{
-    await loadModels();
-    placeFrame();
-};
+imageUpload.addEventListener("change", async function () {
+  const file = this.files[0];
+  if (!file) return;
 
-async function loadModels(){
-    await faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models");
-    await faceapi.nets.faceLandmark68TinyNet.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models");
+  const reader = new FileReader();
+  reader.onload = function () {
+    userImg.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+
+  userImg.onload = async function () {
+    detectFace();
+    tryNextBtn.style.display = "block";
+  };
+});
+
+tryNextBtn.addEventListener("click", () => {
+  currentFrame = (currentFrame + 1) % frames.length;
+  frame.src = frames[currentFrame];
+  detectFace();
+});
+
+async function detectFace() {
+  const detection = await faceapi.detectSingleFace(userImg, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks();
+
+  if (!detection) return;
+
+  const leftEye = detection.landmarks.getLeftEye();
+  const rightEye = detection.landmarks.getRightEye();
+
+  const eyeCenterX = (leftEye[0].x + rightEye[3].x) / 2;
+  const eyeCenterY = (leftEye[0].y + rightEye[3].y) / 2;
+
+  const eyeWidth = rightEye[3].x - leftEye[0].x;
+
+  frame.style.display = "block";
+  frame.style.width = eyeWidth * 2 + "px";
+  frame.style.left = userImg.offsetLeft + eyeCenterX - (eyeWidth) + "px";
+  frame.style.top = userImg.offsetTop + eyeCenterY - (eyeWidth / 2) + "px";
 }
-
-async function placeFrame(){
-    const det = await faceapi
-      .detectSingleFace(photo,new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks(true);
-
-    if(!det) return;
-
-    const l = det.landmarks.getLeftEye();
-    const r = det.landmarks.getRightEye();
-
-    const x = (l[0].x + r[3].x)/2;
-    const y = (l[0].y + r[3].y)/2;
-    const w = Math.abs(r[3].x - l[0].x) * 2.2;
-    const h = w * 0.5;
-
-    frame.style.display="block";
-    frame.style.width = w+"px";
-    frame.style.height = h+"px";
-    frame.style.left = (x - w/2)+"px";
-    frame.style.top = (y - h/2)+"px";
-}
-
-tryNext.onclick = ()=> placeFrame();
 </script>
-
 </body>
 </html>
