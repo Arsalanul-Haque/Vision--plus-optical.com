@@ -25,10 +25,6 @@ h1{padding:15px;}
 }
 #frame{
     position:absolute;
-    top:43%;
-    left:50%;
-    width:70%;
-    transform:translate(-50%,-50%);
     pointer-events:none;
     display:none;
 }
@@ -42,9 +38,9 @@ button{
     cursor:pointer;
 }
 #tryNext{
-    display:none; /* initially hide */
+    display:none;
 }
-input{
+#fileInput{
     display:none;
 }
 </style>
@@ -55,40 +51,83 @@ input{
 
 <div id="stage">
     <img id="photo">
-    <img id="frame" src="3812-removebg-preview.png">
+    <img id="frame" src="remove-preview.png">
 </div>
-<label for="file">
-    <button id="uploadBtn">Upload Your Photo</button>
-</label>
-<input type="file" id="file" accept="image/*">
+
+<button id="uploadBtn">Upload Your Photo</button>
+<input type="file" id="fileInput" accept="image/*">
 
 <br>
-<button id="tryNext" onclick="nextFrame()">Try Next Frame</button>
+<button id="tryNext">Try Next Frame</button>
 
+<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 <script>
-const frames=["remove-preview.png"]; // aage aur frames add kar sakte ho
-let current=0;
+const frames = ["3812-removebg-preview.png"]; // add more frames if needed
+let currentFrame = 0;
 
 const photo = document.getElementById("photo");
 const frame = document.getElementById("frame");
-const fileInput = document.getElementById("file");
+const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const tryNextBtn = document.getElementById("tryNext");
 
-fileInput.onchange = e => {
-    const f = e.target.files[0];
-    if(!f) return;
-    photo.src = URL.createObjectURL(f);
-    frame.style.display = "block";      // show frame
-    tryNextBtn.style.display = "inline-block"; // show Try Next Frame button
-    uploadBtn.style.display = "none";    // hide upload button
-};
+// Load face-api models
+async function loadModels(){
+    await faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models");
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models");
+}
 
-function nextFrame(){
-    current = (current + 1) % frames.length;
-    frame.src = frames[current];
+loadModels();
+
+// Upload photo
+uploadBtn.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", async e => {
+    const file = e.target.files[0];
+    if(!file) return;
+
+    photo.src = URL.createObjectURL(file);
+    frame.style.display = "block";
+    tryNextBtn.style.display = "inline-block";
+    uploadBtn.style.display = "none";
+
+    // Wait for image to load
+    photo.onload = async () => {
+        await detectFaceAndPlaceFrame();
+    };
+});
+
+// Try next frame
+tryNextBtn.addEventListener("click", () => {
+    currentFrame = (currentFrame + 1) % frames.length;
+    frame.src = frames[currentFrame];
+    detectFaceAndPlaceFrame(); // reposition frame after switching
+});
+
+// Detect face and position frame
+async function detectFaceAndPlaceFrame(){
+    const detection = await faceapi.detectSingleFace(photo, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true);
+    if(!detection) return;
+
+    const landmarks = detection.landmarks;
+    const leftEye = landmarks.getLeftEye();
+    const rightEye = landmarks.getRightEye();
+
+    // Calculate center between eyes
+    const eyeCenterX = (leftEye[0].x + rightEye[3].x)/2;
+    const eyeCenterY = (leftEye[0].y + rightEye[3].y)/2;
+
+    // Calculate frame size based on distance between eyes
+    const eyeDist = Math.abs(rightEye[3].x - leftEye[0].x);
+    const frameWidth = eyeDist * 2; // adjust multiplier for bigger frame
+    const frameHeight = frameWidth / 2; // adjust ratio
+
+    // Set frame style
+    frame.style.width = frameWidth + "px";
+    frame.style.height = frameHeight + "px";
+    frame.style.left = (eyeCenterX - frameWidth/2) + "px";
+    frame.style.top = (eyeCenterY - frameHeight/2) + "px";
 }
 </script>
-
 </body>
 </html>
