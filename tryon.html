@@ -7,51 +7,56 @@
 
 <style>
 body{
-    margin:0;
-    background:#000;
-    color:white;
-    font-family:Arial;
-    text-align:center;
+  margin:0;
+  background:black;
+  color:white;
+  font-family:Arial;
+  text-align:center;
 }
+
 h1{padding:15px;}
 
-#container{
-    position:relative;
-    width:90%;
-    max-width:400px;
-    margin:auto;
-    margin-top:20px;
+#stage{
+  position:relative;
+  width:90vw;
+  max-width:380px;
+  margin:auto;
 }
 
-#photo{
-    width:100%;
-    border-radius:15px;
-    display:none;
+#userPhoto{
+  width:100%;
+  border-radius:15px;
 }
 
 #frame{
-    position:absolute;
-    left:0;
-    top:0;
-    width:100%;
-    pointer-events:none;
+  position:absolute;
+  left:50%;
+  top:42%;
+  width:65%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  display:none;
 }
 
 .controls{
-    margin:20px;
+  margin-top:15px;
+  position:relative;
+  z-index:10;
 }
 
 button{
-    padding:14px 30px;
-    background:#ff9800;
-    border:none;
-    border-radius:10px;
-    font-size:16px;
-    cursor:pointer;
+  padding:14px 30px;
+  font-size:16px;
+  border:none;
+  border-radius:12px;
+  background:#ff9800;
+  color:black;
+  margin:10px;
+  cursor:pointer;
 }
 
-input{
-    margin:15px;
+#file{
+  display:none;
 }
 </style>
 </head>
@@ -60,42 +65,41 @@ input{
 
 <h1>Vision Plus Optical – AI Try On</h1>
 
-<div id="container">
-    <img id="photo">
-    <img id="frame" src="3812-remove-preview.png">
+<div id="stage">
+  <img id="userPhoto">
+  <img id="frame" src="3812-remove-preview.png">
 </div>
 
 <div class="controls">
-    <input type="file" id="upload" accept="image/*">
-    <br>
-    <button id="next">Try Next Frame</button>
+  <label for="file">
+    <button id="uploadBtn">Upload Your Photo</button>
+  </label>
+  <input type="file" id="file" accept="image/*">
+  <br>
+  <button onclick="nextFrame()">Try Next Frame</button>
 </div>
 
 <script>
-const upload = document.getElementById("upload");
-const photo = document.getElementById("photo");
+const frames = [
+  "remove-preview.png"
+];
+
+let index = 0;
+const photo = document.getElementById("userPhoto");
 const frame = document.getElementById("frame");
+const uploadBtn = document.getElementById("uploadBtn");
 
-upload.onchange = e=>{
-    const file = e.target.files[0];
-    if(file){
-        photo.src = URL.createObjectURL(file);
-        photo.style.display="block";
-    }
+document.getElementById("file").onchange = e =>{
+  const file = e.target.files[0];
+  if(!file) return;
+  photo.src = URL.createObjectURL(file);
+  frame.style.display="block";
+  uploadBtn.style.display="none";
 };
 
-photo.onload = ()=>{
-    fitFrame();
-};
-
-function fitFrame(){
-    const w = photo.clientWidth;
-    const h = photo.clientHeight;
-
-    // 👓 Perfect glasses position
-    frame.style.width = (w * 0.7) + "px";
-    frame.style.left = (w * 0.15) + "px";
-    frame.style.top = (h * 0.38) + "px";
+function nextFrame(){
+  index = (index+1) % frames.length;
+  frame.src = frames[index];
 }
 </script>
 
