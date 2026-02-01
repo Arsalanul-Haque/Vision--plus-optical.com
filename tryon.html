@@ -2,62 +2,31 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Vision Plus Optical – AI Try On</title>
+<title>Vision Plus Optical</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
-body{
-  margin:0;
-  background:black;
-  color:white;
-  font-family:Arial;
-  text-align:center;
-}
-
-h1{padding:15px;}
-
-#stage{
-  position:relative;
-  width:90vw;
-  max-width:380px;
-  margin:auto;
-}
-
-#userPhoto{
-  width:100%;
-  border-radius:15px;
-}
-
+body{margin:0;background:#000;color:#fff;font-family:Arial;text-align:center}
+h1{padding:15px}
+#stage{position:relative;width:90vw;max-width:380px;margin:auto}
+#photo{width:100%;border-radius:15px}
 #frame{
-  position:absolute;
-  left:50%;
-  top:42%;
-  width:65%;
-  transform:translate(-50%,-50%);
-  pointer-events:none;
-  display:none;
+ position:absolute;
+ top:43%;
+ left:50%;
+ width:70%;
+ transform:translate(-50%,-50%);
+ pointer-events:none;
+ display:none;
 }
-
-.controls{
-  margin-top:15px;
-  position:relative;
-  z-index:10;
-}
-
 button{
-  padding:14px 30px;
-  font-size:16px;
-  border:none;
-  border-radius:12px;
-  background:#ff9800;
-  color:black;
-  margin:10px;
-  cursor:pointer;
+ padding:14px 30px;
+ margin:10px;
+ border:none;
+ border-radius:12px;
+ background:#ff9800;
+ font-size:16px;
 }
-
-#file{
-  display:none;
-}
+input{display:none}
 </style>
 </head>
 
@@ -66,40 +35,36 @@ button{
 <h1>Vision Plus Optical – AI Try On</h1>
 
 <div id="stage">
-  <img id="userPhoto">
+  <img id="photo">
   <img id="frame" src="3812-removebg-preview.png">
 </div>
 
-<div class="controls">
-  <label for="file">
-    <button id="uploadBtn">Upload Your Photo</button>
-  </label>
-  <input type="file" id="file" accept="image/*">
-  <br>
-  <button onclick="nextFrame()">Try Next Frame</button>
-</div>
+<label for="file">
+  <button id="uploadBtn">Upload Your Photo</button>
+</label>
+<input type="file" id="file" accept="image/*">
+
+<br>
+<button onclick="nextFrame()">Try Next Frame</button>
 
 <script>
-const frames = [
-  "remove-preview.png"
-];
+const frames=["remove-preview.png"];
+let i=0;
+const photo=document.getElementById("photo");
+const frame=document.getElementById("frame");
+const upload=document.getElementById("uploadBtn");
 
-let index = 0;
-const photo = document.getElementById("userPhoto");
-const frame = document.getElementById("frame");
-const uploadBtn = document.getElementById("uploadBtn");
-
-document.getElementById("file").onchange = e =>{
-  const file = e.target.files[0];
-  if(!file) return;
-  photo.src = URL.createObjectURL(file);
+file.onchange=e=>{
+  const f=e.target.files[0];
+  if(!f) return;
+  photo.src=URL.createObjectURL(f);
   frame.style.display="block";
-  uploadBtn.style.display="none";
+  upload.style.display="none";
 };
 
 function nextFrame(){
-  index = (index+1) % frames.length;
-  frame.src = frames[index];
+  i=(i+1)%frames.length;
+  frame.src=frames[i];
 }
 </script>
 
