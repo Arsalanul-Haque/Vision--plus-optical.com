@@ -57,7 +57,7 @@ faceMesh.onResults(results => {
     let y = left.y * canvas.height;
     let w = (right.x - left.x) * canvas.width;
 
-    ctx.drawImage(frame, x-40, y-40, w+80, w/2);
+    ctx.drawImage(frame, x-40, y-40, w+80,
   }
 });
 
@@ -67,7 +67,15 @@ const camera = new Camera(video,{
   },
   width:360,
   height:480
-});
+let eyeCenterY = (p[159].y + p[145].y) / 2 * canvas.height;
+
+let glassesWidth = w * 1.6;
+let glassesHeight = glassesWidth / 2.5;
+
+let gx = x - glassesWidth * 0.25;
+let gy = eyeCenterY - glassesHeight / 2;
+
+ctx.drawImage(frame, gx, gy, glassesWidth, glassesHeight);});
 camera.start();
 
 function switchCamera(){
