@@ -1,33 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vision Plus Optical – AI Try On</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{
     margin:0;
     background:#000;
-    color:#fff;
-    font-family:Arial, sans-serif;
+    color:white;
+    font-family:Arial;
     text-align:center;
 }
 h1{padding:15px;}
+
 #stage{
     position:relative;
     width:90vw;
     max-width:400px;
     margin:auto;
 }
+
 #photo{
     width:100%;
     border-radius:15px;
-}
-#frame{
-    position:absolute;
-    pointer-events:none;
     display:none;
 }
+
+#frame{
+    position:absolute;
+    top:0;
+    left:0;
+    pointer-events:none;
+    display:none;
+    z-index:10;
+}
+
 button{
     padding:14px 30px;
     margin:10px;
@@ -35,23 +44,20 @@ button{
     border-radius:12px;
     background:#ff9800;
     font-size:16px;
-    cursor:pointer;
 }
-#tryNext{
-    display:none;
-}
-#fileInput{
-    display:none;
-}
+
+#fileInput{display:none;}
+#tryNext{display:none;}
 </style>
 </head>
+
 <body>
 
 <h1>Vision Plus Optical – AI Try On</h1>
 
 <div id="stage">
     <img id="photo">
-    <img id="frame" src="remove-preview.png">
+    <img id="3812-removebg-preview.png">
 </div>
 
 <button id="uploadBtn">Upload Your Photo</button>
@@ -61,73 +67,59 @@ button{
 <button id="tryNext">Try Next Frame</button>
 
 <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-<script>
-const frames = ["3812-removebg-preview.png"]; // add more frames if needed
-let currentFrame = 0;
 
+<script>
 const photo = document.getElementById("photo");
 const frame = document.getElementById("frame");
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
-const tryNextBtn = document.getElementById("tryNext");
+const tryNext = document.getElementById("tryNext");
 
-// Load face-api models
+uploadBtn.onclick = ()=> fileInput.click();
+
+fileInput.onchange = e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    photo.src = URL.createObjectURL(file);
+    photo.style.display="block";
+    uploadBtn.style.display="none";
+    tryNext.style.display="inline-block";
+};
+
+photo.onload = async ()=>{
+    await loadModels();
+    placeFrame();
+};
+
 async function loadModels(){
     await faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models");
     await faceapi.nets.faceLandmark68TinyNet.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models");
 }
 
-loadModels();
+async function placeFrame(){
+    const det = await faceapi
+      .detectSingleFace(photo,new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks(true);
 
-// Upload photo
-uploadBtn.addEventListener("click", () => fileInput.click());
+    if(!det) return;
 
-fileInput.addEventListener("change", async e => {
-    const file = e.target.files[0];
-    if(!file) return;
+    const l = det.landmarks.getLeftEye();
+    const r = det.landmarks.getRightEye();
 
-    photo.src = URL.createObjectURL(file);
-    frame.style.display = "block";
-    tryNextBtn.style.display = "inline-block";
-    uploadBtn.style.display = "none";
+    const x = (l[0].x + r[3].x)/2;
+    const y = (l[0].y + r[3].y)/2;
+    const w = Math.abs(r[3].x - l[0].x) * 2.2;
+    const h = w * 0.5;
 
-    // Wait for image to load
-    photo.onload = async () => {
-        await detectFaceAndPlaceFrame();
-    };
-});
-
-// Try next frame
-tryNextBtn.addEventListener("click", () => {
-    currentFrame = (currentFrame + 1) % frames.length;
-    frame.src = frames[currentFrame];
-    detectFaceAndPlaceFrame(); // reposition frame after switching
-});
-
-// Detect face and position frame
-async function detectFaceAndPlaceFrame(){
-    const detection = await faceapi.detectSingleFace(photo, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true);
-    if(!detection) return;
-
-    const landmarks = detection.landmarks;
-    const leftEye = landmarks.getLeftEye();
-    const rightEye = landmarks.getRightEye();
-
-    // Calculate center between eyes
-    const eyeCenterX = (leftEye[0].x + rightEye[3].x)/2;
-    const eyeCenterY = (leftEye[0].y + rightEye[3].y)/2;
-
-    // Calculate frame size based on distance between eyes
-    const eyeDist = Math.abs(rightEye[3].x - leftEye[0].x);
-    const frameWidth = eyeDist * 2; // adjust multiplier for bigger frame
-    const frameHeight = frameWidth / 2; // adjust ratio
-
-    // Set frame style
-    frame.style.width = frameWidth + "px";
-    frame.style.height = frameHeight + "px";
-    frame.style.left = (eyeCenterX - frameWidth/2) + "px";
-    frame.style.top = (eyeCenterY - frameHeight/2) + "px";
+    frame.style.display="block";
+    frame.style.width = w+"px";
+    frame.style.height = h+"px";
+    frame.style.left = (x - w/2)+"px";
+    frame.style.top = (y - h/2)+"px";
 }
+
+tryNext.onclick = ()=> placeFrame();
 </script>
+
 </body>
 </html>
