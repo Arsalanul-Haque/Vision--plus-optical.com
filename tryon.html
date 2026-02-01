@@ -1,67 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vision Plus Optical</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vision Plus – AI Try-On</title>
+<style>
+  body {margin:0;font-family:Arial,sans-serif;text-align:center;background:#111;color:white;}
+  video {width:100%;max-width:400px;border-radius:12px;margin-top:15px;}
+  .frames {margin-top:15px;display:flex;justify-content:center;gap:10px;}
+  .frames img {width:80px;height:50px;object-fit:cover;border:2px solid #fff;border-radius:8px;cursor:pointer;}
+  .frames img.selected {border:2px solid yellow;}
+  canvas {position:absolute;top:0;left:0;}
+</style>
 </head>
-<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;">
+<body>
 
-  <!-- Logo -->
-  <header style="background:#111;color:#fff;padding:15px;text-align:center;">
-    <h1>VISION PLUS OPTICAL</h1>
-  </header>
+<h1>Vision Plus – AI Try-On</h1>
+<div style="position:relative;display:inline-block;">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+</div>
 
-  <!-- Search Bar -->
-  <div style="padding:10px;text-align:center;">
-    <input type="text" placeholder="🔍 Search glasses" onkeyup="search(this.value)" style="width:80%;padding:10px;font-size:16px;">
-  </div>
+<div class="frames">
+  <img src="frames/frame1.png" id="f1" onclick="selectFrame('f1')">
+  <img src="frames/frame2.png" id="f2" onclick="selectFrame('f2')">
+  <img src="frames/frame3.png" id="f3" onclick="selectFrame('f3')">
+</div>
 
-  <!-- Category Cards -->
-  <div style="display:flex;justify-content:space-around;padding:10px;">
-    <div>Men</div>
-    <div>Women</div>
-    <div>Kids</div>
-    <div>On Sale</div>
-  </div>
+<script>
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let selectedFrame = null;
 
-  <!-- Sample Products -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;padding:15px;">
-    <div style="text-align:center;border:1px solid #ddd;padding:10px;border-radius:8px;">
-      <img src="frames/frame1.png" style="width:100%;border-radius:8px;">
-      <h4>Black Sunglass</h4>
-      <p>₹1299</p>
-      <button onclick="addToCart('Black Sunglass')">Add to Cart</button>
-      <button onclick="orderNow('Black Sunglass')">Order Now</button>
-    </div>
-    <div style="text-align:center;border:1px solid #ddd;padding:10px;border-radius:8px;">
-      <img src="frames/frame2.png" style="width:100%;border-radius:8px;">
-      <h4>Transparent Frame</h4>
-      <p>₹999</p>
-      <button onclick="addToCart('Transparent Frame')">Add to Cart</button>
-      <button onclick="orderNow('Transparent Frame')">Order Now</button>
-    </div>
-    <div style="text-align:center;border:1px solid #ddd;padding:10px;border-radius:8px;">
-      <img src="frames/frame3.png" style="width:100%;border-radius:8px;">
-      <h4>Blue Cut</h4>
-      <p>₹799</p>
-      <button onclick="addToCart('Blue Cut')">Add to Cart</button>
-      <button onclick="orderNow('Blue Cut')">Order Now</button>
-    </div>
-  </div>
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream => { video.srcObject = stream; })
+.catch(err => { alert("Camera access denied: "+err); });
 
-  <!-- Location & WhatsApp -->
-  <div style="text-align:center;margin:15px;">
-    <a href="https://www.google.com/maps/search/Pokhar+ke+samne,+Choti+Balliya+Begusarai+Bihar" target="_blank">📍 Our Location</a><br>
-    <a href="https://wa.me/917903965251" target="_blank">💬 Order on WhatsApp</a><br>
-    <a href="tryon.html">🤖 AI Try-On</a>
-  </div>
+function selectFrame(id){
+  document.querySelectorAll('.frames img').forEach(img => img.classList.remove('selected'));
+  document.getElementById(id).classList.add('selected');
+  selectedFrame = document.getElementById(id);
+}
 
-  <script>
-    function addToCart(item){ alert(item + " added to cart"); }
-    function orderNow(item){ window.open("https://wa.me/917903965251?text=I want to order "+item,"_blank"); }
-    function search(val){ console.log("Search: "+val); }
-  </script>
+video.addEventListener('play', () => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    if(selectedFrame){
+      ctx.drawImage(selectedFrame,canvas.width/4,canvas.height/4,canvas.width/2,canvas.height/4);
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+});
+</script>
+
 </body>
 </html>
