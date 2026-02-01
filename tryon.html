@@ -1,107 +1,77 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Vision Plus – AI Try On</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-
+<title>Vision Plus Optical – AI Try On</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body{
-  margin:0;
-  background:black;
-  color:white;
-  text-align:center;
-  font-family:Arial;
-}
-#wrap{
-  position:relative;
-  width:90%;
-  max-width:400px;
-  margin:auto;
-}
-img{
-  width:100%;
-}
-canvas{
-  position:absolute;
-  left:0;
-  top:0;
-}
-button{
-  padding:12px 25px;
-  margin-top:10px;
-  background:orange;
-  border:none;
-  border-radius:10px;
-  font-size:16px;
-}
+body{margin:0;background:#111;color:white;font-family:Arial;text-align:center}
+header{background:black;padding:15px;font-size:22px}
+#canvas{width:100%;max-width:380px;border-radius:15px}
+button{padding:10px 15px;margin:8px;background:#ff9800;border:none;border-radius:8px}
 </style>
 </head>
 
 <body>
 
-<h2>Vision Plus Optical – AI Try On</h2>
+<header>Vision Plus Optical – AI Try On</header>
+
+<canvas id="canvas"></canvas><br>
 
 <input type="file" id="upload" accept="image/*"><br>
 <button onclick="changeFrame()">Change Frame</button>
 
-<div id="wrap">
-  <img id="photo">
-  <canvas id="canvas"></canvas>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
 
 <script>
-const frames = [
-"3812-removebg-preview.png"
-]
-let frameIndex = 0
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const upload=document.getElementById("upload");
 
-const img = document.getElementById("photo")
-const canvas = document.getElementById("canvas")
-const ctx = canvas.getContext("2d")
+let frames=["Frame/f1.png","Frame/f2.png","Frame/f3.png"];
+let frameIndex=0;
+let frame=new Image();
+frame.src=frames[0];
 
-Promise.all([
-faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models"),
-faceapi.nets.faceLandmark68Net.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models")
-])
+const faceMesh=new FaceMesh({
+ locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+});
+faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true});
 
-document.getElementById("upload").addEventListener("change", e=>{
-img.src = URL.createObjectURL(e.target.files[0])
-})
+let img=new Image();
 
-img.onload = async ()=>{
-canvas.width = img.width
-canvas.height = img.height
-
-const face = await faceapi.detectSingleFace(img,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks()
-if(!face){alert("Face not found"); return}
-
-const leftEye = face.landmarks.getLeftEye()
-const rightEye = face.landmarks.getRightEye()
-
-const x = leftEye[0].x
-const y = leftEye[0].y
-const w = rightEye[3].x - leftEye[0].x
-
-drawFrame(x,y,w)
-}
-
-function drawFrame(x,y,w){
-ctx.clearRect(0,0,canvas.width,canvas.height)
-let frame = new Image()
-frame.src = frames[frameIndex]
-frame.onload = ()=>{
-ctx.drawImage(frame,x-w*0.3,y-w*0.6,w*2,w*0.8)
-}
-}
+upload.onchange=e=>{
+ img.src=URL.createObjectURL(e.target.files[0]);
+ img.onload=()=>processImage();
+};
 
 function changeFrame(){
-frameIndex++
-if(frameIndex>=frames.length) frameIndex=0
-img.onload()
+ frameIndex=(frameIndex+1)%frames.length;
+ frame.src=frames[frameIndex];
+ processImage();
 }
+
+function processImage(){
+ canvas.width=img.width;
+ canvas.height=img.height;
+ ctx.drawImage(img,0,0);
+ faceMesh.send({image:img});
+}
+
+faceMesh.onResults(r=>{
+ if(!r.multiFaceLandmarks) return;
+ let p=r.multiFaceLandmarks[0];
+
+ let left=p[33], right=p[263];
+ let eyeY=(p[159].y+p[145].y)/2;
+
+ let w=(right.x-left.x)*canvas.width*1.6;
+ let h=w/2.5;
+
+ let x=left.x*canvas.width-w*0.25;
+ let y=eyeY*canvas.height-h/2;
+
+ ctx.drawImage(frame,x,y,w,h);
+});
 </script>
 
 </body>
