@@ -1,83 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vision Plus AI Try-On</title>
+<title>Vision Plus Optical – Virtual Try On</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{
-margin:0;
-background:#000;
-font-family:Arial;
-color:white;
-text-align:center;
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#111;
+    color:white;
+    text-align:center;
+}
+
+header{
+    background:#000;
+    padding:15px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.container{
+    padding:20px;
 }
 
 #camera{
-width:100%;
-max-width:400px;
-border-radius:15px;
-margin-top:10px;
+    width:100%;
+    max-width:400px;
+    border-radius:15px;
 }
 
-#canvas{
-position:absolute;
-top:0;
-left:0;
+#frame{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:280px;
+    pointer-events:none;
 }
 
-.frameBtn{
-padding:10px 15px;
-margin:10px;
-border:none;
-border-radius:10px;
-font-size:16px;
-background:gold;
+.camera-box{
+    position:relative;
+    display:inline-block;
+}
+
+.controls{
+    margin-top:15px;
+}
+
+button{
+    padding:10px 20px;
+    border:none;
+    background:#ff9800;
+    color:black;
+    font-size:16px;
+    border-radius:8px;
+    cursor:pointer;
+}
+button:hover{
+    background:#ffc107;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Vision Plus – AI Try-On</h2>
+<header>Vision Plus Optical – Try On</header>
 
-<div style="position:relative;">
-<video id="camera" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
+<div class="container">
+    <div class="camera-box">
+        <video id="camera" autoplay playsinline></video>
+        <img id="frame" src="Frame/Frame.png">
+    </div>
+
+    <div class="controls">
+        <button onclick="switchCamera()">Switch Camera</button>
+    </div>
 </div>
 
-<br>
-
-<button class="frameBtn" onclick="setFrame('frame1.png')">Frame 1</button>
-<button class="frameBtn" onclick="setFrame('frame2.png')">Frame 2</button>
-<button class="frameBtn" onclick="setFrame('frame3.png')">Frame 3</button>
-
 <script>
-const video = document.getElementById("camera");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+let cameraFacing = "user";
+let video = document.getElementById("camera");
 
-let frameImg = new Image();
-
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => { video.srcObject = stream; });
-
-function setFrame(name){
-frameImg.src = "frames/" + name;
+async function startCamera(){
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+        try{
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video:{ facingMode: cameraFacing }
+            });
+            video.srcObject = stream;
+        }catch(e){
+            alert("Camera access denied");
+        }
+    }
 }
 
-video.addEventListener("play",()=>{
-canvas.width = video.videoWidth;
-canvas.height = video.videoHeight;
-
-setInterval(()=>{
-ctx.drawImage(video,0,0,canvas.width,canvas.height);
-
-if(frameImg.src){
-ctx.drawImage(frameImg,canvas.width/2-150,canvas.height/2-80,300,120);
+function switchCamera(){
+    cameraFacing = cameraFacing === "user" ? "environment" : "user";
+    startCamera();
 }
 
-},30);
-});
+startCamera();
 </script>
 
 </body>
