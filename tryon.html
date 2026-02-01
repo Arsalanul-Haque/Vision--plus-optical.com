@@ -1,77 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>Vision Plus Optical – AI Try On</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{margin:0;background:#111;color:white;font-family:Arial;text-align:center}
-header{background:black;padding:15px;font-size:22px}
-#canvas{width:100%;max-width:380px;border-radius:15px}
-button{padding:10px 15px;margin:8px;background:#ff9800;border:none;border-radius:8px}
+body{
+    margin:0;
+    background:#000;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+}
+h1{padding:15px;}
+#container{
+    position:relative;
+    width:90%;
+    max-width:400px;
+    margin:auto;
+}
+#photo{
+    width:100%;
+    border-radius:15px;
+}
+#overlay{
+    position:absolute;
+    top:0;
+    left:0;
+}
+.controls{
+    margin:15px;
+}
+button{
+    padding:12px 25px;
+    background:#ff9800;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+}
+input{
+    margin:10px;
+}
 </style>
 </head>
 
 <body>
 
-<header>Vision Plus Optical – AI Try On</header>
+<h1>Vision Plus Optical – AI Try On</h1>
 
-<canvas id="canvas"></canvas><br>
+<div id="container">
+    <img id="photo">
+    <canvas id="overlay"></canvas>
+</div>
 
-<input type="file" id="upload" accept="image/*"><br>
-<button onclick="changeFrame()">Change Frame</button>
+<div class="controls">
+    <input type="file" id="upload" accept="image/*">
+    <br>
+    <button onclick="changeFrame()">Change Frame</button>
+</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 
 <script>
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-const upload=document.getElementById("upload");
+const frames = [
+"./Frame/Frame1.png",
+"./Frame/Frame2.png",
+"./Frame/Frame3.png"
+];
 
-let frames=["Frame/f1.png","Frame/f2.png","Frame/f3.png"];
-let frameIndex=0;
-let frame=new Image();
-frame.src=frames[0];
+let currentFrame = 0;
+const img = document.getElementById("photo");
+const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
+const frameImg = new Image();
 
-const faceMesh=new FaceMesh({
- locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+document.getElementById("upload").addEventListener("change", e=>{
+    const file = e.target.files[0];
+    if(file){
+        img.src = URL.createObjectURL(file);
+    }
 });
-faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true});
 
-let img=new Image();
+img.onload = async ()=>{
+    canvas.width = img.width;
+    canvas.height = img.height;
+    await loadModels();
+    detectFace();
+}
 
-upload.onchange=e=>{
- img.src=URL.createObjectURL(e.target.files[0]);
- img.onload=()=>processImage();
-};
+async function loadModels(){
+    await faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models");
+}
+
+async function detectFace(){
+    const detection = await faceapi.detectSingleFace(img,new faceapi.TinyFaceDetectorOptions());
+    if(!detection) return;
+
+    const {x,y,width,height} = detection.box;
+
+    frameImg.src = frames[currentFrame];
+    frameImg.onload = ()=>{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(frameImg,
+            x - width*0.1,
+            y + height*0.35,
+            width*1.2,
+            height*0.4
+        );
+    }
+}
 
 function changeFrame(){
- frameIndex=(frameIndex+1)%frames.length;
- frame.src=frames[frameIndex];
- processImage();
+    currentFrame = (currentFrame+1)%frames.length;
+    detectFace();
 }
-
-function processImage(){
- canvas.width=img.width;
- canvas.height=img.height;
- ctx.drawImage(img,0,0);
- faceMesh.send({image:img});
-}
-
-faceMesh.onResults(r=>{
- if(!r.multiFaceLandmarks) return;
- let p=r.multiFaceLandmarks[0];
-
- let left=p[33], right=p[263];
- let eyeY=(p[159].y+p[145].y)/2;
-
- let w=(right.x-left.x)*canvas.width*1.6;
- let h=w/2.5;
-
- let x=left.x*canvas.width-w*0.25;
- let y=eyeY*canvas.height-h/2;
-
- ctx.drawImage(frame,x,y,w,h);
-});
 </script>
 
 </body>
