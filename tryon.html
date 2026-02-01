@@ -1,108 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vision Plus Optical – Virtual Try On</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>Vision Plus AI Try-On</title>
 <style>
-body{
-    margin:0;
-    font-family: Arial, sans-serif;
-    background:#111;
-    color:white;
-    text-align:center;
-}
-
-header{
-    background:#000;
-    padding:15px;
-    font-size:22px;
-    font-weight:bold;
-}
-
-.container{
-    padding:20px;
-}
-
-#camera{
-    width:100%;
-    max-width:400px;
-    border-radius:15px;
-}
-
-#frame{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    width:280px;
-    pointer-events:none;
-}
-
-.camera-box{
-    position:relative;
-    display:inline-block;
-}
-
-.controls{
-    margin-top:15px;
-}
-
-button{
-    padding:10px 20px;
-    border:none;
-    background:#ff9800;
-    color:black;
-    font-size:16px;
-    border-radius:8px;
-    cursor:pointer;
-}
-button:hover{
-    background:#ffc107;
-}
+  body { margin:0; font-family: Arial; text-align:center; background:#f2f2f2; }
+  video { border-radius: 10px; }
+  canvas { position:absolute; top:0; left:0; }
+  #container { position:relative; display:inline-block; }
+  #glasses { position:absolute; width:120px; cursor: grab; }
+  button { margin-top:10px; padding:10px 20px; background:#ff9800; border:none; color:#fff; font-size:16px; border-radius:5px; }
 </style>
 </head>
-
 <body>
-
-<header>Vision Plus Optical – Try On</header>
-
-<div class="container">
-    <div class="camera-box">
-        <video id="camera" autoplay playsinline></video>
-        <img id="frame" src="Frame/Frame.png">
-    </div>
-
-    <div class="controls">
-        <button onclick="switchCamera()">Switch Camera</button>
-    </div>
+<h2>Vision Plus Optical – AI Try-On</h2>
+<div id="container">
+  <video id="video" autoplay playsinline width="300"></video>
+  <canvas id="overlay" width="300" height="300"></canvas>
+  <img id="glasses" src="https://i.postimg.cc/3J4fJ6yf/glasses.png">
 </div>
+<br>
+<button id="switchCamera">Switch Camera</button><script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script><script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script><script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script><script>
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay');
+const ctx = overlay.getContext('2d');
+const glasses = document.getElementById('glasses');
+let front = true;
 
-<script>
-let cameraFacing = "user";
-let video = document.getElementById("camera");
+// Camera setup
+let camera = new Camera(video, {
+  onFrame: async () => { await faceMesh.send({image: video}); },
+  width: 300, height: 300
+});
+camera.start();
 
-async function startCamera(){
-    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-        try{
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video:{ facingMode: cameraFacing }
-            });
-            video.srcObject = stream;
-        }catch(e){
-            alert("Camera access denied");
-        }
-    }
+// FaceMesh
+const faceMesh = new FaceMesh({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+}});
+faceMesh.setOptions({maxNumFaces:1, refineLandmarks:true, minDetectionConfidence:0.5});
+faceMesh.onResults(onResults);
+
+function onResults(results) {
+  ctx.clearRect(0,0,overlay.width,overlay.height);
+  if(results.multiFaceLandmarks && results.multiFaceLandmarks.length>0){
+    const landmarks = results.multiFaceLandmarks[0];
+    // Get eyes positions
+    const leftEye = landmarks[33];
+    const rightEye = landmarks[263];
+    const eyeCenterX = (leftEye.x + rightEye.x)/2 * overlay.width;
+    const eyeCenterY = (leftEye.y + rightEye.y)/2 * overlay.height;
+    const eyeDist = Math.abs(leftEye.x - rightEye.x) * overlay.width * 2.5;
+    glasses.style.width = eyeDist + 'px';
+    glasses.style.left = (eyeCenterX - eyeDist/2) + 'px';
+    glasses.style.top = (eyeCenterY - eyeDist/2) + 'px';
+  }
 }
 
-function switchCamera(){
-    cameraFacing = cameraFacing === "user" ? "environment" : "user";
-    startCamera();
+// Switch camera
+document.getElementById('switchCamera').onclick = () => {
+  front = !front;
+  camera.stop();
+  camera = new Camera(video, {
+    onFrame: async () => { await faceMesh.send({image: video}); },
+    width:300, height:300, facingMode: front ? 'user':'environment'
+  });
+  camera.start();
+};
+
+// Drag & Drop glasses (mobile touch + desktop mouse)
+let isDragging = false, offsetX, offsetY;
+glasses.addEventListener('mousedown', startDrag);
+glasses.addEventListener('touchstart', startDrag);
+function startDrag(e){
+  isDragging = true;
+  const rect = glasses.getBoundingClientRect();
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+  offsetX = x - rect.left;
+  offsetY = y - rect.top;
 }
-
-startCamera();
-</script>
-
-</body>
+document.addEventListener('mousemove', drag);
+document.addEventListener('touchmove', drag);
+function drag(e){
+  if(!isDragging) return;
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+  glasses.style.left = (x - offsetX) + 'px';
+  glasses.style.top = (y - offsetY) + 'px';
+}
+document.addEventListener('mouseup', ()=>{isDragging=false;});
+document.addEventListener('touchend', ()=>{isDragging=false;});
+</script></body>
 </html>
