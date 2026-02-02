@@ -2,40 +2,40 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Vision Plus Optical – AI Try On</title>
+<title>Vision Plus Optical – Try On</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
 <style>
 body{
 margin:0;
-background:black;
+background:#000;
 color:white;
 font-family:Arial;
 text-align:center;
 }
 
 h1{
-margin-top:20px;
+padding:15px;
 }
 
 #stage{
 position:relative;
 width:90%;
 max-width:360px;
-margin:20px auto;
+margin:auto;
 border-radius:20px;
 overflow:hidden;
+background:#111;
 }
 
 #userImage{
 width:100%;
-border-radius:20px;
 display:none;
 }
 
-#frame{
+#glasses{
 position:absolute;
 top:0;
 left:0;
@@ -44,12 +44,12 @@ display:none;
 }
 
 button{
-background:#ff9f00;
-border:none;
-padding:15px 30px;
-border-radius:15px;
-font-size:18px;
 margin:15px;
+padding:14px 30px;
+font-size:18px;
+border:none;
+border-radius:12px;
+background:#ff9800;
 cursor:pointer;
 }
 
@@ -64,72 +64,75 @@ display:none;
 <h1>Vision Plus Optical – AI Try On</h1>
 
 <div id="stage">
-  <img id="userImage">
-  <img id="frame">
+    <img id="userImage">
+    <img id="glasses" src="3812-removebg-preview.png">
 </div>
 
-<input type="file" id="imageUpload" accept="image/*">
+<input type="file" id="upload" accept="image/*">
 
 <button id="uploadBtn">Upload Your Photo</button>
-<button id="tryNext" style="display:none;">Try Next Frame</button>
+<button id="retryBtn" style="display:none;">Try Again</button>
 
 <script>
 const uploadBtn = document.getElementById("uploadBtn");
-const imageUpload = document.getElementById("imageUpload");
-const userImg = document.getElementById("userImage");
-const frame = document.getElementById("frame");
-const tryNext = document.getElementById("tryNext");
+const retryBtn = document.getElementById("retryBtn");
+const upload = document.getElementById("upload");
+const userImage = document.getElementById("userImage");
+const glasses = document.getElementById("glasses");
 
-const frames = ["3812-removebg-preview.png"];
-let frameIndex = 0;
+uploadBtn.onclick = () => upload.click();
 
-uploadBtn.onclick = () => imageUpload.click();
-
-imageUpload.onchange = () => {
- const file = imageUpload.files[0];
+upload.onchange = () => {
+ const file = upload.files[0];
  if(!file) return;
  const reader = new FileReader();
  reader.onload = () => {
-   userImg.src = reader.result;
-   userImg.style.display = "block";
-   uploadBtn.style.display = "none";
- }
+   userImage.src = reader.result;
+   userImage.style.display="block";
+   uploadBtn.style.display="none";
+ };
  reader.readAsDataURL(file);
 };
 
+retryBtn.onclick = () => {
+ glasses.style.display="none";
+ userImage.style.display="none";
+ uploadBtn.style.display="inline-block";
+ retryBtn.style.display="none";
+};
+
 Promise.all([
- faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models"),
- faceapi.nets.faceLandmark68Net.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js/models")
+ faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights"),
+ faceapi.nets.faceLandmark68Net.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights")
 ]);
 
-userImg.onload = async () => {
- tryNext.style.display="block";
- detect();
+userImage.onload = async () => {
+ const result = await faceapi
+   .detectSingleFace(userImage, new faceapi.TinyFaceDetectorOptions())
+   .withFaceLandmarks();
+
+ if(!result){
+   alert("Face not detected. Try clear front face photo.");
+   return;
+ }
+
+ const leftEye = result.landmarks.getLeftEye();
+ const rightEye = result.landmarks.getRightEye();
+
+ const eyeLeft = leftEye[0];
+ const eyeRight = rightEye[3];
+
+ const eyeWidth = eyeRight.x - eyeLeft.x;
+ const centerX = (eyeLeft.x + eyeRight.x) / 2;
+ const centerY = (eyeLeft.y + eyeRight.y) / 2;
+
+ glasses.style.width = eyeWidth * 2 + "px";
+ glasses.style.left = centerX - eyeWidth + "px";
+ glasses.style.top = centerY - eyeWidth * 0.5 + "px";
+ glasses.style.display="block";
+
+ retryBtn.style.display="inline-block";
 };
-
-tryNext.onclick = () => {
- frameIndex = (frameIndex+1)%frames.length;
- frame.src = frames[frameIndex];
- detect();
-};
-
-async function detect(){
- const face = await faceapi.detectSingleFace(userImg,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
- if(!face) return;
-
- const left = face.landmarks.getLeftEye();
- const right = face.landmarks.getRightEye();
-
- const x = (left[0].x + right[3].x)/2;
- const y = (left[0].y + right[3].y)/2;
- const width = right[3].x - left[0].x;
-
- frame.src = frames[frameIndex];
- frame.style.display="block";
- frame.style.width = width*2 + "px";
- frame.style.left = x - width + "px";
- frame.style.top = y - width/2 + "px";
-}
 </script>
 
 </body>
