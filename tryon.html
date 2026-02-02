@@ -2,163 +2,42 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Vision Plus AI Try On</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Glasses Try On</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <style>
 body{
-margin:0;
 background:black;
-font-family:Arial;
 text-align:center;
 color:white;
+font-family:Arial;
 }
-
-h1{
-margin:10px;
-}
-
-#main{
-position:relative;
+video,canvas{
 width:90%;
-max-width:350px;
-margin:auto;
-margin-top:20px;
-}
-
-#userPhoto{
-width:100%;
-border-radius:20px;
-}
-
-#glasses{
-position:absolute;
-top:50%;
-left:50%;
-width:180px;
-transform:translate(-50%,-50%);
-touch-action:none;
-}
-
-button{
-background:#ff9900;
-border:none;
-padding:12px 18px;
+max-width:400px;
 border-radius:10px;
-font-size:16px;
-margin:6px;
 }
-
-#controls{
-margin-top:15px;
+button{
+padding:12px 25px;
+font-size:16px;
+background:orange;
+border:none;
+border-radius:10px;
+margin:10px;
 }
 </style>
 </head>
 
 <body>
+<h2>Vision Plus AI Try-On</h2>
 
-<h1>Vision Plus Optical – AI Try On</h1>
+<video id="video" autoplay></video>
+<canvas id="canvas"></canvas><br>
 
-<input type="file" id="upload" accept="image/*"><br><br>
+<button onclick="download()">Download Image</button>
 
-<div id="main">
-<img id="userPhoto">
-<img id="glasses" src="3853-removebg-preview.png">
-</div>
-
-<div id="controls">
-<button onclick="scale(1.1)">Zoom +</button>
-<button onclick="scale(0.9)">Zoom -</button>
-<button onclick="rotate(5)">Rotate</button><br>
-<button onclick="changeFrame()">Change Frame</button>
-<button onclick="downloadImage()">Download Image</button>
-</div>
-
-<canvas id="canvas" style="display:none"></canvas>
-
-<script>
-let glasses=document.getElementById("glasses");
-let upload=document.getElementById("upload");
-let userPhoto=document.getElementById("userPhoto");
-
-let frames=[
-"3812-removebg-preview.png",
-"3812-removebg-preview.png"
-];
-
-let frameIndex=0;
-
-upload.onchange=e=>{
-let file=e.target.files[0];
-let r=new FileReader();
-r.onload=()=>{
-userPhoto.src=r.result;
-x=0;
-y=-30;
-scaleVal=1;
-rot=0;
-update();
-}
-r.readAsDataURL(file);
-};
-
-let x=0,y=0,scaleVal=1,rot=0;
-let startX=0,startY=0;
-
-glasses.addEventListener("pointerdown",e=>{
-startX=e.clientX-x;
-startY=e.clientY-y;
-glasses.setPointerCapture(e.pointerId);
-
-glasses.onpointermove=e=>{
-x=e.clientX-startX;
-y=e.clientY-startY;
-update();
-}
-glasses.onpointerup=()=>glasses.onpointermove=null;
-});
-
-function update(){
-glasses.style.transform=
-`translate(-50%,-50%) translate(${x}px,${y}px) scale(${scaleVal}) rotate(${rot}deg)`;
-}
-
-function scale(v){scaleVal*=v;update();}
-function rotate(v){rot+=v;update();}
-
-function changeFrame(){
-frameIndex=(frameIndex+1)%frames.length;
-glasses.src=frames[frameIndex];
-}
-
-function downloadImage(){
-let canvas=document.getElementById("canvas");
-let ctx=canvas.getContext("2d");
-
-canvas.width=userPhoto.width;
-canvas.height=userPhoto.height;
-
-ctx.drawImage(userPhoto,0,0,canvas.width,canvas.height);
-
-let rect=glasses.getBoundingClientRect();
-let base=document.getElementById("main").getBoundingClientRect();
-
-let gx=rect.left-base.left;
-let gy=rect.top-base.top;
-
-ctx.save();
-ctx.translate(gx+rect.width/2,gy+rect.height/2);
-ctx.rotate(rot*Math.PI/180);
-ctx.scale(scaleVal,scaleVal);
-ctx.drawImage(glasses,-rect.width/2,-rect.height/2,rect.width,rect.height);
-ctx.restore();
-
-let link=document.createElement("a");
-link.download="vision-plus.png";
-link.href=canvas.toDataURL();
-link.click();
-}
-</script>
-
+<script src="tryon.js"></script>
 </body>
 </html>
