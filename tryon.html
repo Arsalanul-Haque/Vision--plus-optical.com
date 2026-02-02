@@ -1,138 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Vision Plus Optical – Try On</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{
-margin:0;
-background:#000;
-color:white;
-font-family:Arial;
-text-align:center;
+    margin:0;
+    background:#000;
+    font-family:Arial;
+    color:white;
+    text-align:center;
 }
 
 h1{
-padding:15px;
+    margin:15px 0;
 }
 
-#stage{
-position:relative;
-width:90%;
-max-width:360px;
-margin:auto;
-border-radius:20px;
-overflow:hidden;
-background:#111;
+#container{
+    position:relative;
+    width:90vw;
+    max-width:400px;
+    margin:auto;
+    background:#111;
+    border-radius:20px;
+    overflow:hidden;
 }
 
-#userImage{
-width:100%;
-display:none;
+#userPhoto{
+    width:100%;
+    display:block;
 }
 
 #glasses{
-position:absolute;
-top:0;
-left:0;
-pointer-events:none;
-display:none;
+    position:absolute;
+    top:40%;
+    left:50%;
+    width:200px;
+    transform:translate(-50%, -50%);
+    cursor:move;
+    touch-action:none;
+}
+
+.controls{
+    margin-top:10px;
 }
 
 button{
-margin:15px;
-padding:14px 30px;
-font-size:18px;
-border:none;
-border-radius:12px;
-background:#ff9800;
-cursor:pointer;
+    background:orange;
+    border:none;
+    padding:10px 18px;
+    margin:5px;
+    border-radius:10px;
+    font-size:16px;
 }
-
 input{
-display:none;
+    margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Vision Plus Optical – AI Try On</h1>
+<h1>Vision Plus Optical</h1>
 
-<div id="stage">
-    <img id="userImage">
+<input type="file" accept="image/*" id="upload">
+
+<div id="container">
+    <img id="userPhoto">
     <img id="glasses" src="3812-removebg-preview.png">
 </div>
 
-<input type="file" id="upload" accept="image/*">
-
-<button id="uploadBtn">Upload Your Photo</button>
-<button id="retryBtn" style="display:none;">Try Again</button>
+<div class="controls">
+    <button onclick="scale(1.1)">Zoom +</button>
+    <button onclick="scale(0.9)">Zoom -</button>
+    <button onclick="rotate(-5)">⟲ Rotate</button>
+    <button onclick="rotate(5)">⟳ Rotate</button>
+</div>
 
 <script>
-const uploadBtn = document.getElementById("uploadBtn");
-const retryBtn = document.getElementById("retryBtn");
-const upload = document.getElementById("upload");
-const userImage = document.getElementById("userImage");
-const glasses = document.getElementById("glasses");
+let glasses = document.getElementById("glasses");
+let upload = document.getElementById("upload");
+let userPhoto = document.getElementById("userPhoto");
 
-uploadBtn.onclick = () => upload.click();
-
-upload.onchange = () => {
- const file = upload.files[0];
- if(!file) return;
- const reader = new FileReader();
- reader.onload = () => {
-   userImage.src = reader.result;
-   userImage.style.display="block";
-   uploadBtn.style.display="none";
- };
- reader.readAsDataURL(file);
+upload.onchange = e =>{
+    let file = e.target.files[0];
+    let reader = new FileReader();
+    reader.onload = () => userPhoto.src = reader.result;
+    reader.readAsDataURL(file);
 };
 
-retryBtn.onclick = () => {
- glasses.style.display="none";
- userImage.style.display="none";
- uploadBtn.style.display="inline-block";
- retryBtn.style.display="none";
-};
+let x=0,y=0,scaleVal=1,rot=0;
 
-Promise.all([
- faceapi.nets.tinyFaceDetector.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights"),
- faceapi.nets.faceLandmark68Net.loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights")
-]);
+glasses.addEventListener("pointerdown",e=>{
+    glasses.setPointerCapture(e.pointerId);
+    startX = e.clientX - x;
+    startY = e.clientY - y;
 
-userImage.onload = async () => {
- const result = await faceapi
-   .detectSingleFace(userImage, new faceapi.TinyFaceDetectorOptions())
-   .withFaceLandmarks();
+    glasses.onpointermove = e=>{
+        x = e.clientX - startX;
+        y = e.clientY - startY;
+        update();
+    }
 
- if(!result){
-   alert("Face not detected. Try clear front face photo.");
-   return;
- }
+    glasses.onpointerup = ()=>{
+        glasses.onpointermove=null;
+    }
+});
 
- const leftEye = result.landmarks.getLeftEye();
- const rightEye = result.landmarks.getRightEye();
+function scale(val){
+    scaleVal *= val;
+    update();
+}
 
- const eyeLeft = leftEye[0];
- const eyeRight = rightEye[3];
+function rotate(val){
+    rot += val;
+    update();
+}
 
- const eyeWidth = eyeRight.x - eyeLeft.x;
- const centerX = (eyeLeft.x + eyeRight.x) / 2;
- const centerY = (eyeLeft.y + eyeRight.y) / 2;
-
- glasses.style.width = eyeWidth * 2 + "px";
- glasses.style.left = centerX - eyeWidth + "px";
- glasses.style.top = centerY - eyeWidth * 0.5 + "px";
- glasses.style.display="block";
-
- retryBtn.style.display="inline-block";
-};
+function update(){
+    glasses.style.transform =
+    `translate(${x}px,${y}px) scale(${scaleVal}) rotate(${rot}deg)`;
+}
 </script>
 
 </body>
