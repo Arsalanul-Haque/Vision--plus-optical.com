@@ -6,54 +6,197 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Arial;background:#f5f5f5}
-header{background:#111;color:#fff;padding:12px;display:flex;align-items:center;justify-content:space-between}
-.logo{display:flex;align-items:center;gap:10px}
-.logo img{height:45px}
-.search{padding:8px;border-radius:20px;border:none;width:200px}
 
-.hero{background:#1e90ff;color:#fff;padding:12px;text-align:center}
+body{margin:0;font-family:Arial;background:#f5f5f5}
+
+header{
+background:#111;
+color:white;
+padding:12px;
+display:flex;
+align-items:center;
+justify-content:space-between
+}
+
+.logo{display:flex;align-items:center;gap:10px}
+.logo img{height:40px}
+
+.search{
+padding:8px;
+border-radius:20px;
+border:none;
+width:180px
+}
+
+.profile{
+width:35px;
+height:35px;
+border-radius:50%;
+background:#1e90ff;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-weight:bold;
+cursor:pointer
+}
+
+.hero{
+background:#1e90ff;
+color:white;
+padding:12px;
+text-align:center
+}
 
 .categories{text-align:center;padding:10px}
-.cat{display:inline-block;background:#111;color:#fff;padding:8px 12px;margin:5px;border-radius:6px;cursor:pointer}
 
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;padding:15px}
-.card{background:#fff;padding:10px;border-radius:10px;box-shadow:0 0 6px rgba(0,0,0,.1);text-align:center}
-.card img{width:100%;height:140px;object-fit:cover;border-radius:8px}
+.cat{
+display:inline-block;
+background:#111;
+color:white;
+padding:8px 12px;
+margin:5px;
+border-radius:6px;
+cursor:pointer
+}
+
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:15px;
+padding:15px
+}
+
+.card{
+background:white;
+padding:10px;
+border-radius:10px;
+box-shadow:0 0 6px rgba(0,0,0,.1);
+text-align:center
+}
+
+.card img{
+width:100%;
+height:140px;
+object-fit:cover;
+border-radius:8px
+}
+
 .price{font-weight:bold;margin:5px 0}
-.btn{background:#1e90ff;color:white;border:none;padding:6px 12px;border-radius:5px;margin:3px}
 
-.bottom{position:fixed;bottom:10px;right:10px;background:#1e90ff;color:white;padding:14px;border-radius:50%;font-size:20px}
-.home{position:fixed;bottom:10px;left:10px;background:black;color:white;padding:14px;border-radius:50%;font-size:18px}
-.ai{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#ff5722;color:white;padding:12px 22px;border-radius:30px;font-weight:bold}
+input{
+padding:8px;
+margin:4px;
+width:90%
+}
 
-#cartBox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;padding:15px;overflow:auto}
+.btn{
+background:#1e90ff;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:5px;
+margin:3px;
+cursor:pointer
+}
+
+.home{
+position:fixed;
+bottom:10px;
+left:10px;
+background:black;
+color:white;
+padding:14px;
+border-radius:50%
+}
+
+.cart{
+position:fixed;
+bottom:10px;
+right:10px;
+background:#1e90ff;
+color:white;
+padding:14px;
+border-radius:50%
+}
+
+.tryon{
+position:fixed;
+bottom:10px;
+left:50%;
+transform:translateX(-50%);
+background:#ff5722;
+color:white;
+padding:12px 20px;
+border-radius:30px;
+font-weight:bold
+}
+
+#profileBox,#productView{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:white;
+overflow:auto;
+padding:20px;
+text-align:center
+}
+
+.gallery img{
+width:70px;
+margin:5px;
+cursor:pointer
+}
+
+.similar{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+gap:10px
+}
+
 </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">
-    <img src="https://uploads.onecompiler.io/44c5humbr/44c5hxnd3/2795.png">
-    <b>Vision Plus Optical</b>
-  </div>
-  <input class="search" placeholder="🔍 Search glasses" onkeyup="search(this.value)">
+
+<div class="logo">
+<img src="https://uploads.onecompiler.io/44c5humbr/44c5hxnd3/2795.png">
+<b>Vision Plus Optical</b>
+</div>
+
+<input class="search" placeholder="Search glasses" onkeyup="search(this.value)">
+
+<div class="profile" id="profile" onclick="openProfile()">👤</div>
+
 </header>
 
 <div class="hero">
 📍 Pokhar ke samne, Choti Balliya, Begusarai, Bihar <br>
-<a style="color:white" href="https://wa.me/917903965251">💬 Order on WhatsApp</a><br>
-<a style="color:white" href="https://www.google.com/maps/search/vision plus pokhar+ke+samne+Choti+Balliya+Begusarai+Bihar">📍 Open in Google Maps</a>
+<a style="color:white" href="https://wa.me/917903965251">💬 Order on WhatsApp</a>
 </div>
 
 <div class="categories">
-  <span class="cat" onclick="filter('sunglass')">🕶 Sunglass</span>
-  <span class="cat" onclick="filter('frame')">👓 Frame</span>
-  <span class="cat" onclick="filter('bluecut')">💻 Blue Cut</span>
+<span class="cat" onclick="filter('sunglass')">Sunglass</span>
+<span class="cat" onclick="filter('frame')">Frame</span>
+<span class="cat" onclick="filter('bluecut')">Blue Cut</span>
+<span class="cat" onclick="showAll()">All</span>
 </div>
 
 <div class="products">
+
+<div class="card" id="loginCard">
+<h3>Login / Sign Up</h3>
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="pass" type="password" placeholder="Password">
+<button class="btn" onclick="signup()">Sign Up</button>
+<button class="btn" onclick="login()">Login</button>
+</div>
 
 <div class="card" data-cat="sunglass" data-name="black sunglass">
 <img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083">
@@ -61,6 +204,7 @@ header{background:#111;color:#fff;padding:12px;display:flex;align-items:center;j
 <div class="price">₹1299</div>
 <button class="btn" onclick="add('Black Sunglass',1299)">Add to Cart</button>
 <button class="btn" onclick="order('Black Sunglass')">Order Now</button>
+<button class="btn" onclick="viewProduct('Black Sunglass',1299,'https://images.unsplash.com/photo-1511499767150-a48a237f0083')">View</button>
 </div>
 
 <div class="card" data-cat="frame" data-name="transparent frame">
@@ -69,6 +213,7 @@ header{background:#111;color:#fff;padding:12px;display:flex;align-items:center;j
 <div class="price">₹1599</div>
 <button class="btn" onclick="add('Transparent Frame',1599)">Add to Cart</button>
 <button class="btn" onclick="order('Transparent Frame')">Order Now</button>
+<button class="btn" onclick="viewProduct('Transparent Frame',1599,'https://images.unsplash.com/photo-1517841905240-472988babdf9')">View</button>
 </div>
 
 <div class="card" data-cat="bluecut" data-name="blue cut glass">
@@ -77,58 +222,165 @@ header{background:#111;color:#fff;padding:12px;display:flex;align-items:center;j
 <div class="price">₹1999</div>
 <button class="btn" onclick="add('Blue Cut Glass',1999)">Add to Cart</button>
 <button class="btn" onclick="order('Blue Cut Glass')">Order Now</button>
+<button class="btn" onclick="viewProduct('Blue Cut Glass',1999,'https://uploads.onecompiler.io/44c5humbr/44chff9f5/4002.jpg')">View</button>
 </div>
 
-<div class="card" data-cat="frame" data-name="transparent frame">
-<img src="https://uploads.onecompiler.io/44c5humbr/44c5hxnd3/1639.jpg">
-<h4>Transparent Frame</h4
-<div class="price">₹1599<4/div>
-<button class="btn" onclick="add('Transparent Frame',1599)">Add to Cart</button>
-<button class="btn" onclick="order('Transparent Frame')">Order Now</button>
 </div>
+
+<div id="productView">
+
+<h2 id="vName"></h2>
+
+<img id="vImg" style="width:250px">
+
+<div class="gallery" id="gallery"></div>
+
+<h3 id="vPrice"></h3>
+
+<div style="color:orange;font-size:20px">⭐⭐⭐⭐☆</div>
+
+<button class="btn" id="cartBtn">Add to Cart</button>
+<button class="btn" id="orderBtn">Order Now</button>
+<button class="btn" onclick="alert('Added to wishlist ❤️')">Wishlist</button>
+
+<h3>Similar Products</h3>
+
+<div class="similar">
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083">
+<p>Black Sunglass</p>
 </div>
-<div class="card" data-cat="frame" data-name="transparent frame">
-<img src="https://uploads.onecompiler.io/44c5humbr/44c5hxnd3/1639.jpg">
-<h4>Transparent Frame</h4
-<div class="price">₹9<4/div>
-<button class="btn" onclick="add('Transparent Frame',1599)">Add to Cart</button>
-<button class="btn" onclick="order('Transparent Frame')">Order Now</button>
+
+<div class="card">
+<img src="https://images.unsplash.com/photo-1517841905240-472988babdf9">
+<p>Transparent Frame</p>
 </div>
+
+<div class="card">
+<img src="https://uploads.onecompiler.io/44c5humbr/44chff9f5/4002.jpg">
+<p>Blue Cut</p>
 </div>
-<div id="cartBox">
-<h2>Your Cart</h2>
+
+</div>
+
+<button class="btn" onclick="closeView()">Close</button>
+
+</div>
+
+<div id="profileBox">
+<h2>User Profile</h2>
+<p id="userName"></p>
+<h3>Cart Products</h3>
 <div id="cartList"></div>
-<h3>Total: ₹<span id="total">0</span></h3>
-<p>Pay via UPI: <b>7903965251</b></p>
-<button onclick="closeCart()">Close</button>
+<button class="btn" onclick="logout()">Logout</button>
+<button class="btn" onclick="closeProfile()">Close</button>
 </div>
 
-<div class="bottom" onclick="openCart()">🛒</div>
+<div class="cart" onclick="openProfile()">🛒</div>
+
+<a href="tryon.html"><div class="tryon">👓 Try On</div></a>
+
 <div class="home" onclick="location.reload()">🏠</div>
-<a href="tryon.html"><div class="ai">AI Try-On</div></a>
 
 <script>
-let cart=[], total=0;
 
-function add(n,p){cart.push(n+" ₹"+p); total+=p; alert("Added to cart")}
-function openCart(){
-let h=""; cart.forEach(i=>h+="<p>"+i+"</p>");
-cartList.innerHTML=h; total.innerText=total; cartBox.style.display="block";
+let cart=JSON.parse(localStorage.getItem("cart"))||[]
+
+function signup(){
+let name=document.getElementById("name").value
+let email=document.getElementById("email").value
+let pass=document.getElementById("pass").value
+
+if(email.includes("@")&&pass.length>=4){
+localStorage.setItem("user",JSON.stringify({name,email,pass}))
+alert("Signup success")
+loginCard.style.display="none"
+profile.innerText=name.charAt(0)
+}else alert("Enter valid email")
 }
-function closeCart(){cartBox.style.display="none"}
-function order(p){window.open("https://wa.me/917903965251?text=I want to order "+p)}
+
+function login(){
+let email=document.getElementById("email").value
+let pass=document.getElementById("pass").value
+let u=JSON.parse(localStorage.getItem("user"))
+
+if(u&&email==u.email&&pass==u.pass){
+loginCard.style.display="none"
+profile.innerText=u.name.charAt(0)
+alert("Login success")
+}else alert("Wrong login")
+}
+
+function add(n,p){
+cart.push(n+" ₹"+p)
+localStorage.setItem("cart",JSON.stringify(cart))
+alert("Added to cart")
+}
+
+function order(p){
+window.open("https://wa.me/917903965251?text=I want to order "+p)
+}
+
+function viewProduct(n,p,img){
+vName.innerText=n
+vPrice.innerText="₹"+p
+vImg.src=img
+
+gallery.innerHTML=`
+<img src="${img}" onclick="vImg.src=this.src">
+<img src="${img}" onclick="vImg.src=this.src">
+<img src="${img}" onclick="vImg.src=this.src">
+`
+
+cartBtn.onclick=function(){add(n,p)}
+orderBtn.onclick=function(){order(n)}
+
+productView.style.display="block"
+}
+
+function closeView(){productView.style.display="none"}
+
+function openProfile(){
+let u=JSON.parse(localStorage.getItem("user"))
+if(!u){alert("Login first");return}
+
+userName.innerText="Name: "+u.name
+cartList.innerHTML=cart.map(i=>"<p>"+i+"</p>").join("")
+profileBox.style.display="block"
+}
+
+function closeProfile(){profileBox.style.display="none"}
+
+function logout(){localStorage.removeItem("user");location.reload()}
 
 function search(v){
-v=v.toLowerCase();
+v=v.toLowerCase()
 document.querySelectorAll(".card").forEach(c=>{
-c.style.display = c.dataset.name.includes(v) ? "block" : "none";
-});
+if(c.dataset.name)
+c.style.display=c.dataset.name.includes(v)?"block":"none"
+})
 }
+
 function filter(cat){
 document.querySelectorAll(".card").forEach(c=>{
-c.style.display = c.dataset.cat==cat ? "block" : "none";
-});
+if(c.dataset.cat)
+c.style.display=c.dataset.cat==cat?"block":"none"
+})
 }
+
+function showAll(){
+document.querySelectorAll(".card").forEach(c=>c.style.display="block")
+}
+
+window.onload=function(){
+let u=JSON.parse(localStorage.getItem("user"))
+if(u){
+loginCard.style.display="none"
+profile.innerText=u.name.charAt(0)
+}
+}
+
 </script>
 
 </body>
